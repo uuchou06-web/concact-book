@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>班級聯絡簿</title>
+<style>
+:root{
+  --blue:#3157b7;--cyan:#18aebd;--ink:#172947;--muted:#52667f;
+  --line:#c9d8e8;--bg:#f2f7fb;--card:#fff;--pale:#f6f9fd;
+}
+*{box-sizing:border-box}
+input,select,textarea{max-width:100%}
+body{
+  margin:0;color:var(--ink);
+  font:16px/1.55 "Microsoft JhengHei",system-ui,sans-serif;
+  background:linear-gradient(120deg,#e1e9fc 0%,var(--bg) 50%,#d9f5f4 100%);
+}
+.app{width:min(1080px,calc(100% - 28px));margin:0 auto;padding:28px 0 40px}
+header{text-align:center;margin-bottom:22px}
+h1{font-size:clamp(26px,4vw,35px);margin:0;font-weight:800;letter-spacing:.03em}
+header p{margin:5px 0 0;color:var(--muted)}
+.panel{padding:24px;background:var(--card);border:1px solid #fff;border-radius:22px;box-shadow:0 15px 38px #233e6824}
+.group{margin-bottom:22px}
+h2{
+ display:flex;align-items:center;gap:10px;margin:0 0 13px;padding:9px 15px;
+ border-radius:11px;font-size:19px;color:#fff;
+ background:linear-gradient(105deg,var(--blue),#3795c7 48%,#d9f4f4 100%);
+}
+h2:before{content:"";width:5px;height:21px;border-radius:4px;background:#75eeff}
+.group:nth-of-type(2) h2{background:linear-gradient(105deg,#226fae,#25a9a7 48%,#d9f4f4 100%)}
+.group:nth-of-type(3) h2{background:linear-gradient(105deg,#315bb3,#65a6d5 48%,#e1f1f7 100%)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field.full{grid-column:1/-1}
+label{font-weight:700}
+input,select,textarea{
+ width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;
+ padding:11px 13px;font:inherit;color:var(--ink);
+}
+input,select{min-height:46px}
+textarea{min-height:105px;resize:vertical;display:block}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{
+ outline:3px solid #0ea5c75c;outline-offset:2px
+}
+.hint{font-size:13px;color:var(--muted)}
+.actions{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:8px 0 22px}
+button{
+ min-height:43px;border:1px solid var(--line);border-radius:10px;padding:9px 16px;
+ background:#fff;color:var(--ink);font:700 15px "Microsoft JhengHei",system-ui,sans-serif;cursor:pointer
+}
+button:hover{filter:brightness(.96)}
+.primary{
+ min-width:min(300px,100%);min-height:49px;color:#fff;border:0;border-radius:14px;
+ font-size:18px;background:linear-gradient(100deg,#4054d7,#1877cc,#04bbaa);
+ box-shadow:0 7px 15px #1e70b43b
+}
+.danger{color:#a52b35;border-color:#e7b9bd}
+.secondary{background:#f6f9fd}
+.filters{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}
+.status{min-height:42px;background:#f6f9fd;padding:10px 13px;border:1px solid var(--line);border-radius:10px;color:var(--muted)}
+.records{display:grid;gap:12px}
+.record{border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff}
+.record-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.record-title{font-weight:800;font-size:17px}
+.record-meta{font-size:13px;color:var(--muted);margin-top:2px}
+.record-content{white-space:pre-wrap;overflow-wrap:anywhere;margin:11px 0;color:#263b59}
+.record-note{white-space:pre-wrap;overflow-wrap:anywhere;background:#f6f9fd;border-radius:8px;padding:9px 11px;font-size:14px}
+.record-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.empty{padding:24px;text-align:center;border:1px dashed var(--line);border-radius:12px;color:var(--muted);background:#f9fbfe}
+.bottom{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:18px}
+footer{text-align:center;color:#64758b;font-size:13px;margin-top:18px}
+@media(max-width:650px){
+ .app{width:calc(100% - 20px);padding:18px 0}
+ .panel{padding:15px;border-radius:16px}
+ .grid,.filters{grid-template-columns:1fr}
+ .field.full{grid-column:auto}
+ .record-top{display:block}
+ .record-top .record-meta{margin-top:4px}
+ .bottom{flex-direction:column}
+ .bottom button{width:100%}
+ h2{font-size:18px}
+ .primary{width:100%}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+@media print{
+ body{background:#fff;color:#000}
+ .app{width:100%;padding:0}
+ header{margin:0 0 14px}
+ .panel{box-shadow:none;border:0;padding:0}
+ .no-print,footer{display:none!important}
+ .record{break-inside:avoid;border:1px solid #aaa}
+ .records{gap:8px}
+}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+  <h1>📘 班級聯絡簿</h1>
+  <p>記錄每日親師聯絡事項，依學生與日期查詢，也能列印留存</p>
+</header>
+
+<div class="panel">
+  <section class="group no-print">
+    <h2>新增／編輯聯絡紀錄</h2>
+    <form id="recordForm">
+      <div class="grid">
+        <div class="field">
+          <label for="recordDate">聯絡日期</label>
+          <input id="recordDate" type="date" required>
+        </div>
+        <div class="field">
+          <label for="studentName">學生姓名</label>
+          <input id="studentName" list="studentOptions" maxlength="40" placeholder="輸入或選擇學生姓名" required>
+          <datalist id="studentOptions"></datalist>
+        </div>
+        <div class="field full">
+          <label for="contactContent">聯絡事項</label>
+          <textarea id="contactContent" maxlength="3000" placeholder="請輸入需要通知家長或記錄的事項…" required></textarea>
+        </div>
+        <div class="field full">
+          <label for="contactNote">備註（選填）</label>
+          <textarea id="contactNote" maxlength="2000" placeholder="例如：已電話聯繫、待追蹤事項等"></textarea>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" type="submit" id="saveBtn">＋ 儲存聯絡紀錄</button>
+        <button type="button" class="secondary" id="cancelEdit" hidden>取消編輯</button>
+      </div>
+    </form>
+    <div id="formStatus" class="status" role="status" aria-live="polite">資料只會保存在目前瀏覽器，不會上傳到外部服務。</div>
+  </section>
+
+  <section class="group">
+    <h2>聯絡紀錄查詢</h2>
+    <div class="filters no-print">
+      <div class="field">
+        <label for="filterName">依學生姓名查詢</label>
+        <input id="filterName" list="studentOptions" placeholder="輸入姓名關鍵字">
+      </div>
+      <div class="field">
+        <label for="filterDate">依日期查詢</label>
+        <input id="filterDate" type="date">
+      </div>
+      <button type="button" id="resetFilters">清除篩選</button>
+    </div>
+    <div class="toolbar no-print">
+      <button type="button" id="printBtn">🖨️ 列印目前紀錄</button>
+      <button type="button" id="exportBtn">⬇ 匯出 CSV</button>
+      <button type="button" id="backupBtn">備份 JSON</button>
+      <button type="button" id="importBtn">匯入 JSON</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <div id="recordCount" class="hint" aria-live="polite">目前 0 筆紀錄</div>
+    <div id="records" class="records" style="margin-top:10px">
+      <div class="empty">目前還沒有聯絡紀錄，請先新增一筆。</div>
+    </div>
+  </section>
+
+  <div class="bottom no-print">
+    <button type="button" id="clearForm">清空輸入欄位</button>
+    <button type="button" class="danger" id="clearAll">刪除本機全部紀錄</button>
+  </div>
+</div>
+<footer>HTML5 單檔工具 · 可離線使用 · 資料保存在此瀏覽器</footer>
+</main>
+
+<script>
+"use strict";
+// 本機資料儲存：所有紀錄只存在使用者目前的瀏覽器。
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = "classContactBookRecords_v1";
+let records = [];
+let editingId = null;
+let visibleRecords = [];
+
+function todayString(){
+  const d = new Date();
+  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0,10);
+}
+function setStatus(message, isError=false){
+  $("formStatus").textContent = message;
+  $("formStatus").style.color = isError ? "#a52b35" : "#52667f";
+}
+function loadRecords(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    records = Array.isArray(parsed) ? parsed.filter(r =>
+      r && typeof r.id === "string" && typeof r.date === "string" &&
+      typeof r.name === "string" && typeof r.content === "string"
+    ) : [];
+  }catch(error){
+    records = [];
+    setStatus("讀取本機資料時發生問題；目前先以空白紀錄開啟。", true);
+  }
+}
+function saveRecords(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    return true;
+  }catch(error){
+    setStatus("儲存失敗，可能是瀏覽器儲存空間不足。請先匯出備份。", true);
+    return false;
+  }
+}
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[ch]);
+}
+function refreshStudentOptions(){
+  const names = [...new Set(records.map(r => r.name.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-Hant"));
+  $("studentOptions").innerHTML = names.map(name => `<option value="${escapeHTML(name)}"></option>`).join("");
+}
+function clearInputs(){
+  $("recordDate").value = todayString();
+  $("studentName").value = "";
+  $("contactContent").value = "";
+  $("contactNote").value = "";
+  editingId = null;
+  $("saveBtn").textContent = "＋ 儲存聯絡紀錄";
+  $("cancelEdit").hidden = true;
+}
+function getFilteredRecords(){
+  const name = $("filterName").value.trim().toLocaleLowerCase();
+  const date = $("filterDate").value;
+  return records.filter(r =>
+    (!name || r.name.toLocaleLowerCase().includes(name)) &&
+    (!date || r.date === date)
+  ).sort((a,b)=>b.date.localeCompare(a.date) || b.updatedAt.localeCompare(a.updatedAt));
+}
+function renderRecords(){
+  visibleRecords = getFilteredRecords();
+  $("recordCount").textContent = `目前顯示 ${visibleRecords.length} 筆／全部 ${records.length} 筆紀錄`;
+  const host = $("records");
+  if(!visibleRecords.length){
+    host.innerHTML = `<div class="empty">${records.length ? "找不到符合條件的紀錄。" : "目前還沒有聯絡紀錄，請先新增一筆。"}</div>`;
+    return;
+  }
+  host.innerHTML = visibleRecords.map(r => `
+    <article class="record">
+      <div class="record-top">
+        <div>
+          <div class="record-title">${escapeHTML(r.name)}</div>
+          <div class="record-meta">📅 ${escapeHTML(r.date)}${r.updatedAt ? " · 最後更新 " + escapeHTML(r.updatedAt.replace("T"," ").slice(0,16)) : ""}</div>
+        </div>
+      </div>
+      <div class="record-content">${escapeHTML(r.content)}</div>
+      ${r.note ? `<div class="record-note"><strong>備註：</strong>${escapeHTML(r.note)}</div>` : ""}
+      <div class="record-buttons no-print">
+        <button type="button" data-action="edit" data-id="${escapeHTML(r.id)}">編輯</button>
+        <button type="button" class="danger" data-action="delete" data-id="${escapeHTML(r.id)}">刪除</button>
+      </div>
+    </article>
+  `).join("");
+}
+$("recordForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const date = $("recordDate").value;
+  const name = $("studentName").value.trim();
+  const content = $("contactContent").value.trim();
+  const note = $("contactNote").value.trim();
+  if(!date || !name || !content){
+    setStatus("請填寫聯絡日期、學生姓名及聯絡事項。", true);
+    return;
+  }
+  const wasEditing = Boolean(editingId);
+  const now = new Date().toISOString();
+  if(editingId){
+    const index = records.findIndex(r => r.id === editingId);
+    if(index < 0){ setStatus("找不到要編輯的紀錄，請重新操作。", true); return; }
+    records[index] = {...records[index], date, name, content, note, updatedAt:now};
+  }else{
+    records.push({id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)), date, name, content, note, createdAt:now, updatedAt:now});
+  }
+  if(!saveRecords()) return;
+  clearInputs();
+  refreshStudentOptions();
+  renderRecords();
+  setStatus(wasEditing ? "紀錄已更新。" : "聯絡紀錄已儲存。");
+});
+$("records").addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if(!button) return;
+  const record = records.find(r => r.id === button.dataset.id);
+  if(!record) return;
+  if(button.dataset.action === "edit"){
+    editingId = record.id;
+    $("recordDate").value = record.date;
+    $("studentName").value = record.name;
+    $("contactContent").value = record.content;
+    $("contactNote").value = record.note || "";
+    $("saveBtn").textContent = "儲存修改";
+    $("cancelEdit").hidden = false;
+    setStatus("正在編輯紀錄；完成後請按「儲存修改」。");
+    $("recordDate").focus();
+    window.scrollTo({top:0,behavior:"smooth"});
+  }else if(button.dataset.action === "delete"){
+    if(!confirm(`確定刪除 ${record.name} 在 ${record.date} 的這筆紀錄嗎？`)) return;
+    records = records.filter(r => r.id !== record.id);
+    if(!saveRecords()) return;
+    refreshStudentOptions(); renderRecords();
+    setStatus("紀錄已刪除。");
+    if(editingId === record.id) clearInputs();
+  }
+});
+$("cancelEdit").addEventListener("click", () => {clearInputs();setStatus("已取消編輯。");});
+$("clearForm").addEventListener("click", () => {clearInputs();setStatus("輸入欄位已清空。");});
+$("filterName").addEventListener("input", renderRecords);
+$("filterDate").addEventListener("change", renderRecords);
+$("resetFilters").addEventListener("click", () => {$("filterName").value="";$("filterDate").value="";renderRecords();});
+$("printBtn").addEventListener("click", () => {
+  if(!visibleRecords.length){setStatus("目前沒有可列印的紀錄。", true);return;}
+  window.print();
+});
+function downloadBlob(blob, filename){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function csvCell(value){return '"' + String(value ?? "").replace(/"/g,'""') + '"';}
+$("exportBtn").addEventListener("click", () => {
+  if(!visibleRecords.length){setStatus("目前沒有可匯出的紀錄。", true);return;}
+  const rows = [["日期","學生姓名","聯絡事項","備註"], ...visibleRecords.map(r=>[r.date,r.name,r.content,r.note || ""])];
+  const csv = "\uFEFF" + rows.map(row=>row.map(csvCell).join(",")).join("\r\n");
+  downloadBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),`contact_records_${todayString()}.csv`);
+  setStatus("CSV 已開始下載。");
+});
+$("backupBtn").addEventListener("click", () => {
+  const payload = {format:"class-contact-book",version:1,exportedAt:new Date().toISOString(),records};
+  downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),`contact_backup_${todayString()}.json`);
+  setStatus("JSON 備份已開始下載。");
+});
+$("importBtn").addEventListener("click", () => $("importFile").click());
+$("importFile").addEventListener("change", async event => {
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  try{
+    const parsed = JSON.parse(await file.text());
+    const incoming = Array.isArray(parsed) ? parsed : parsed.records;
+    if(!Array.isArray(incoming)) throw new Error("格式不正確");
+    const valid = incoming.filter(r => r && typeof r.date==="string" && typeof r.name==="string" && typeof r.content==="string");
+    if(!valid.length && incoming.length) throw new Error("沒有可匯入的有效紀錄");
+    if(!confirm(`檔案內有 ${valid.length} 筆有效紀錄。要與目前資料合併匯入嗎？`)) return;
+    const ids = new Set(records.map(r=>r.id));
+    valid.forEach((r,i)=>{
+      let id = typeof r.id==="string" && r.id ? r.id : `import-${Date.now()}-${i}`;
+      while(ids.has(id)) id = `${id}-copy`;
+      ids.add(id);
+      records.push({id,date:r.date,name:r.name,content:r.content,note:typeof r.note==="string"?r.note:"",createdAt:r.createdAt||new Date().toISOString(),updatedAt:r.updatedAt||new Date().toISOString()});
+    });
+    if(!saveRecords()) return;
+    refreshStudentOptions();renderRecords();setStatus(`已匯入 ${valid.length} 筆紀錄。`);
+  }catch(error){setStatus("匯入失敗：請確認選擇的是本工具匯出的 JSON 備份檔。",true);}
+  finally{$("importFile").value="";}
+});
+$("clearAll").addEventListener("click", () => {
+  if(!records.length){setStatus("目前沒有紀錄可刪除。");return;}
+  if(!confirm(`確定刪除本機全部 ${records.length} 筆聯絡紀錄嗎？此操作無法復原，建議先備份。`)) return;
+  records = [];
+  if(!saveRecords()) return;
+  clearInputs();refreshStudentOptions();renderRecords();setStatus("本機全部紀錄已刪除。");
+});
+
+// 初始化
+loadRecords();
+$("recordDate").value = todayString();
+refreshStudentOptions();
+renderRecords();
+</script>
+</body>
+</html>
